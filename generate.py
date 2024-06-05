@@ -1,3 +1,5 @@
+import os
+import time
 from argparse import ArgumentParser
 import subprocess as sp
 import random
@@ -20,7 +22,7 @@ TESTSET_DIR = "test"
 VALIDATIONSET_DIR = "validation"
 DATASET_SIZE = 10000
 TRAIN_TEST_RATIO = 0.8
-NUM_DIGITS = 2
+NUM_DIGITS = 6
 
 
 def parse_args():
@@ -87,11 +89,12 @@ def parse_args():
 
 
 def run_kcaptcha_server(docroot, port):
+    docroot = f'{os.getcwd()}/{docroot}'
     return sp.Popen(
         ["php", "-S", "localhost:%d" % port, "-t", docroot],
         stdout=sp.DEVNULL,
-        stderr=sp.DEVNULL,
     )
+
 
 
 def generate_data(count, download_dir, port, chars, length, verbose=True, preprocess_func=None):
@@ -109,6 +112,7 @@ def generate_data(count, download_dir, port, chars, length, verbose=True, prepro
         }
 
         if preprocess_func is None:
+            print("http://localhost:%d?string=%s" % (port, target))
             _, headers = urllib.request.urlretrieve(
                 "http://localhost:%d?string=%s" % (port, target),
                 filename=save_path,
@@ -165,6 +169,11 @@ def main():
     args = parse_args()
     if not args.use_existing_server:
         proc = run_kcaptcha_server(KCAPTCHA_DIR, PORT)
+        print("[+] Waiting for server to start")
+        time.sleep(3)
+
+
+
 
     dataset_dir = pathlib.Path(args.dataset_dir)
     trainset_dir = dataset_dir / TRAINSET_DIR
